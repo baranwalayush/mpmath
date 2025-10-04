@@ -262,6 +262,10 @@ def test_expm():
         for j in range(2):
             assert abs(A[i,j] - B[i,j]) < 1e-15
     
+    # Test non-square matrix input
+    A = [[1, 0], [0, 1], [0, 0]]
+    pytest.raises(ValueError, lambda: expm(A))
+    
 def test_cosm_sinm():
 
     # Simple test with known exact result
@@ -285,4 +289,9 @@ def test_cosm_sinm():
         for j in range(2):
             assert abs(C[i,j] - C_exact[i,j]) < 1e-15
             assert abs(S[i,j] - S_exact[i,j]) < 1e-15
+    
+    # Test non-square matrix input
+    A = [[1, 0], [0, 1], [0, 0]]
+    pytest.raises(ValueError, lambda: cosm(A))
+    pytest.raises(ValueError, lambda: sinm(A))
 
