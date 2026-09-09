@@ -290,8 +290,14 @@ def test_logm():
 def test_fft():
     assert fft([]) == []
     assert fft([1]) == [1]
-    pytest.raises(NotImplementedError, lambda: fft([1, 2, 3]))
     assert fft([1, 0, 0, 0]) == [1, 1, 1, 1]
+
+    x = [1, 2+2j, 2, 3+3j, 3]
+    omega = mp.expjpi(-2 / len(x))
+    expected = [sum(x[n] * omega ** (n * k) for n in range(len(x))) for k in range(len(x))]
+    spectrum = fft(x)
+    assert all(a.ae(b) for a, b in zip(spectrum, expected))
+    assert all(a.ae(b) for a, b in zip(invfft(spectrum), x))
 
     spectrum = fft([0, 1, 0, 0])
     expected = [1, -1j, -1, 1j]
@@ -311,13 +317,18 @@ def test_fft():
     assert all(a.ae(b) for a, b in zip(x, expected))
 
     assert invfft([]) == []
-    pytest.raises(NotImplementedError, lambda: invfft([1, 2, 3]))
 
     # test parseval's theorem
     x = [0.25 + 2.0j, -0.5, 0.75 - 1.0j, -1.0 - 8.0j, 0.5, 0.125 + 0.65j, -0.75, 1.25 + 2.5j]
     X = fft(x)
     time_energy = sum(abs(complex(v)) ** 2 for v in x)
     freq_energy = sum(abs(complex(v)) ** 2 for v in X) / 8
+    assert abs(time_energy - freq_energy) < 1e-12
+
+    x = [0.25 + 2.0j, -0.5, 0.75 - 1.0j, -1.0 - 8.0j, 0.5, 0.125 + 0.65j, -0.75, 1.25 + 2.5j, -0.25 - 1.0j, 0.5]
+    X = fft(x)
+    time_energy = sum(abs(complex(v)) ** 2 for v in x)
+    freq_energy = sum(abs(complex(v)) ** 2 for v in X) / 10
     assert abs(time_energy - freq_energy) < 1e-12
 
 @st.composite
