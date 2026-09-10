@@ -2,7 +2,7 @@ from .calculus import defun
 
 
 def _is_power_of_two(n):
-    return n > 0 and (n & (n - 1)) == 0
+    return (n & (n - 1)) == 0
 
 def _next_power_of_two(n):
     return 1 << (n - 1).bit_length()
@@ -55,22 +55,25 @@ def _fft_cooley_tuckey(ctx, values, inverse=False):
 
 
 def _fft_convolve(ctx, values_a, values_b):
+    """
+    Computes the convolution of two sequences using the Fast Fourier Transform (FFT).
+    """
     size = _next_power_of_two(len(values_a) + len(values_b) - 1)
     padded_a = values_a + [ctx.zero] * (size - len(values_a))
     padded_b = values_b + [ctx.zero] * (size - len(values_b))
-    with ctx.extraprec(10):
-        spectrum_a = _fft_cooley_tuckey(ctx, padded_a)
-        spectrum_b = _fft_cooley_tuckey(ctx, padded_b)
-        spectrum_product = [a * b for a, b in zip(spectrum_a, spectrum_b)]
-        result = _fft_cooley_tuckey(ctx, spectrum_product, True)
+
+    spectrum_a = _fft_cooley_tuckey(ctx, padded_a)
+    spectrum_b = _fft_cooley_tuckey(ctx, padded_b)
+    spectrum_product = [a * b for a, b in zip(spectrum_a, spectrum_b)]
+    result = _fft_cooley_tuckey(ctx, spectrum_product, True)
     return [value / size for value in result]
 
 def _fft_bluestein(ctx, values, inverse=False):
     """
-    This function implements Bluestein's algorithm for computing the Fast Fourier Transform (or Inverse Fast Fourier Transform)
-    of a sequence of complex numbers of arbitrary length.
+    This function implements Bluestein's algorithm for computing the Fast Fourier Transform (or Inverse Fast Fourier Transform) of a sequence of complex numbers of arbitrary length.
 
     https://en.wikipedia.org/wiki/Chirp_Z-transform
+    https://edukatesengkang.com/2026/09/01/how-to-learn-bluesteins-fft-algorithm-chirp-multiplication-convolution-arbitrary-length-dfts-and-prime-size-fourier-transforms/
     """
     n = len(values)
 
@@ -92,8 +95,7 @@ def fft(ctx, values):
     r"""
     Computes the Discrete Fourier Transform (DFT) of a sequence.
 
-    Uses the radix-2 Cooley-Tukey algorithm for power-of-two lengths and
-    Bluestein's algorithm for all other lengths.
+    Uses the radix-2 Cooley-Tukey algorithm for power-of-two lengths and Bluestein's algorithm for all other lengths.
 
     **Examples**
 
@@ -105,19 +107,19 @@ def fft(ctx, values):
     [(2.0 + 4.0j), (0.0 + 0.0j)]
     >>> mp.fft([1, 2, 3, 4])
     [10.0, (-2.0 + 2.0j), -2.0, (-2.0 - 2.0j)]
-    >>> mp.fft([1, 2, 1])
-    [(4.0 + 0.0j), (-0.5 - 0.866025403784439j), (-0.5 + 0.866025403784438j)]
+    >>> [mp.chop(x) for x in mp.fft([1, 2, 1])]
+    [4.0, (-0.5 - 0.866025403784439j), (-0.5 + 0.866025403784439j)]
     """
     n = len(values)
     if n == 0:
         return []
 
     converted_values = [ctx.convert(v) for v in values]
-    if _is_power_of_two(n):
-        with ctx.extraprec(10):
+    with ctx.extraprec(10):
+        if _is_power_of_two(n):
             result = _fft_cooley_tuckey(ctx, converted_values)
-    else:
-        result = _fft_bluestein(ctx, converted_values)
+        else:
+            result = _fft_bluestein(ctx, converted_values)
     return [+v for v in result]
 
 @defun
@@ -125,8 +127,7 @@ def invfft(ctx, values):
     r"""
     Computes the inverse Discrete Fourier Transform (IDFT) of a sequence.
 
-    Uses the radix-2 Cooley-Tukey algorithm for power-of-two lengths and
-    Bluestein's algorithm for all other lengths.
+    Uses the radix-2 Cooley-Tukey algorithm for power-of-two lengths and Bluestein's algorithm for all other lengths.
 
     **Examples**
 
@@ -145,9 +146,9 @@ def invfft(ctx, values):
         return []
 
     converted_values = [ctx.convert(v) for v in values]
-    if _is_power_of_two(n):
-        with ctx.extraprec(10):
+    with ctx.extraprec(10):
+        if _is_power_of_two(n):
             result = _fft_cooley_tuckey(ctx, converted_values, True)
-    else:
-        result = _fft_bluestein(ctx, converted_values, True)
+        else:
+            result = _fft_bluestein(ctx, converted_values, True)
     return [val / n for val in result]
