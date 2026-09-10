@@ -297,24 +297,24 @@ def test_fft():
     expected = [sum(x[n] * omega ** (n * k) for n in range(len(x))) for k in range(len(x))]
     spectrum = fft(x)
     assert all(a.ae(b, abs_eps=1e-14) for a, b in zip(spectrum, expected))
-    assert all(a.ae(b, abs_eps=1e-14) for a, b in zip(invfft(spectrum), x))
+    assert all(a.ae(b) for a, b in zip(invfft(spectrum), x))
 
     spectrum = fft([0, 1, 0, 0])
     expected = [1, -1j, -1, 1j]
-    assert all(a.ae(b, abs_eps=1e-14) for a, b in zip(spectrum, expected))
+    assert all(a.ae(b) for a, b in zip(spectrum, expected))
 
     spectrum = fft([1, 2, 3, 4])
     expected = [10, -2 + 2j, -2, -2 - 2j]
-    assert all(a.ae(b, abs_eps=1e-14) for a, b in zip(spectrum, expected))
+    assert all(a.ae(b) for a, b in zip(spectrum, expected))
     assert mp.chop(invfft(spectrum)) == [1, 2, 3, 4]
 
     spectrum = fft([1, j, -1, -j])
     expected = [0, 4, 0, 0]
-    assert all(a.ae(b, abs_eps=1e-14) for a, b in zip(spectrum, expected))
+    assert all(a.ae(b) for a, b in zip(spectrum, expected))
 
     x = invfft([4, 1 - 1j, 0, 1 + 1j])
     expected = [1.5, 1.5, 0.5, 0.5]
-    assert all(a.ae(b, abs_eps=1e-14) for a, b in zip(x, expected))
+    assert all(a.ae(b) for a, b in zip(x, expected))
 
     assert invfft([]) == []
 
@@ -350,7 +350,7 @@ def signals(draw):
 def test_fft_randomized_complex(x):
     # test that fft and invfft are inverses of each other for random complex inputs
     recovered = invfft(fft(x))
-    assert all(a.ae(b, abs_eps=1e-14) for a, b in zip(recovered, x))
+    assert all(a.ae(b) for a, b in zip(recovered, x))
 
     recovered = fft(invfft(x))
-    assert all(a.ae(b, abs_eps=1e-14) for a, b in zip(recovered, x))
+    assert all(a.ae(b) for a, b in zip(recovered, x))
